@@ -2,10 +2,12 @@ from copy import deepcopy
 import random
 import os
 import platform
-if platform.system() == "Linux":
-    clear = "clear"
-elif platform.system() == "Windows":
+
+clear = "clear"
+
+if platform.system() == "Windows":
     clear = "cls"
+
 
 LOSE = -1
 WIN = 1
@@ -13,9 +15,6 @@ DRAW = 0
 WIN_X = ["X", "X", "X"]
 WIN_O = ["O", "O", "O"]
 EMPTY = "_"
-AI_PLAYER = "X"
-OTHER_PLAYER = "O"
-
 WIN_X_TUPLE = tuple(WIN_X)
 WIN_O_TUPLE = tuple(WIN_O)
 
@@ -27,17 +26,15 @@ def check_end_game(board):
         return "O"
 
     # diagonals
-
-    if board[0][0] != EMPTY and board[0][0] == board[1][1] == board[2][2] :
+    if board[0][0] != EMPTY and board[0][0] == board[1][1] == board[2][2]:
         return board[0][0]
 
     if board[0][2] != EMPTY and board[0][2] == board[1][1] == board[2][0]:
         return board[0][2]
 
-    for i in range(3):
-        for k in range(3):
-            if board[i][k] == EMPTY:
-                return None
+    for row in board:
+        if EMPTY in row:
+            return None
 
     return "D"
 
@@ -52,51 +49,45 @@ def get_possible_boards(board, player):
                 boards.append(new_board)
     return boards
 
-next_move = []
 
-
-def minimax(board, player, AI_PLAYER, OTHER_PLAYER):
+def minimax(board, player, ai_player, other_player):
     end_game = check_end_game(board)
     if end_game is not None:
-        if end_game == AI_PLAYER:
+        if end_game == ai_player:
             return WIN
-        elif end_game == OTHER_PLAYER:
+        elif end_game == other_player:
             return LOSE
         else:
             return DRAW
 
-    values = []
+    values = set()
 
-    if player == AI_PLAYER:
-        next_player = OTHER_PLAYER
+    if player == ai_player:
+        next_player = other_player
     else:
-        next_player = AI_PLAYER
+        next_player = ai_player
 
     for new_board in get_possible_boards(board, player):
-        x = minimax(new_board, next_player, AI_PLAYER, OTHER_PLAYER)
+        evaluation = minimax(new_board, next_player, ai_player, other_player)
+        values.add(evaluation)
+        if player == ai_player and evaluation == WIN:
+            return WIN
+        elif player == other_player and evaluation == LOSE:
+            return LOSE
 
-        values.append(x)
-        if player == AI_PLAYER:
-            if x == WIN:
-                break
-        else:
-            if x == LOSE:
-                break
-
-    if player == AI_PLAYER:
-        max_value = max(values)
-        return max_value
+    if player == ai_player:
+        return max(values)
     else:
         return min(values)
 
 
-def minimaxi(board, player, AI_PLAYER, OTHER_PLAYER):
-    val = []
-    for new_board in get_possible_boards(board, player):
-        val.append((new_board, minimax(new_board, OTHER_PLAYER, AI_PLAYER, OTHER_PLAYER)))
-    m = max(val, key=lambda  cost: cost[1])
-    return random.choice([x for x in val if x[1] == m[1]])
-    # return max(val, key=lambda cost: cost[1])
+def make_decision(board, ai_player, other_player):
+    boards_evaluation = []
+    for new_board in get_possible_boards(board, ai_player):
+        boards_evaluation.append((new_board, minimax(new_board, other_player, ai_player, other_player)))
+    m = max(boards_evaluation, key=lambda cost: cost[1])
+    # choose at random one of the best moves so as to not play the same way every time
+    return random.choice([x for x in boards_evaluation if x[1] == m[1]])
 
 
 def correct_input(x, y, board):
@@ -106,46 +97,47 @@ def correct_input(x, y, board):
         return False
     return True
 
+
 def print_board(board):
     for row in board:
         print(" ".join(row))
 
+
 def play():
-
     board = [["_"] * 3 for _ in range(3)]
-
     start = random.randint(0, 1)
     if start == 1:
-        AI_PLAYER = "X"
-        OTHER_PLAYER = "O"
-        turns = [AI_PLAYER, OTHER_PLAYER]
+        ai_player = "X"
+        other_player = "O"
     else:
-        AI_PLAYER = "O"
-        OTHER_PLAYER = "X"
-        turns = [OTHER_PLAYER, AI_PLAYER]
+        ai_player = "O"
+        other_player = "X"
+    turns = ["X", "O"]
     turn = 0
-
     while True:
         os.system(clear)
         print_board(board)
-        if turns[turn % 2] == OTHER_PLAYER:
-            print("It's player's turn(" + OTHER_PLAYER + ")")
-            x, y = list(map(int, input().split()))
+        if turns[turn % 2] == other_player:
+            print("It's player's turn({0})".format(other_player))
+            x = -1
+            y = -1
             while not correct_input(x, y, board):
                 x, y = list(map(int, input().split()))
-            board[x][y] = OTHER_PLAYER
+                x -= 1
+                y -= 1
+            board[x][y] = other_player
         else:
-            print("It's computer's turn(" + AI_PLAYER + ")")
-            board_new, cost = minimaxi(board, AI_PLAYER, AI_PLAYER, OTHER_PLAYER)
+            print("It's computer's turn({0})".format(ai_player))
+            board_new, cost = make_decision(board, ai_player, other_player)
             board = board_new
         turn += 1
-        b = check_end_game(board)
-        if b != None:
+        winner = check_end_game(board)
+        if winner is not None:
             os.system(clear)
             print_board(board)
-            if b == AI_PLAYER:
+            if winner == ai_player:
                 print("Computer won!")
-            elif b == OTHER_PLAYER:
+            elif winner == other_player:
                 print("You won!")
             else:
                 print("It's a draw")
