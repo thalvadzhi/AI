@@ -8,7 +8,6 @@ clear = "clear"
 if platform.system() == "Windows":
     clear = "cls"
 
-
 LOSE = -1
 WIN = 1
 DRAW = 0
@@ -17,6 +16,8 @@ WIN_O = ["O", "O", "O"]
 EMPTY = "_"
 WIN_X_TUPLE = tuple(WIN_X)
 WIN_O_TUPLE = tuple(WIN_O)
+MINUS_INFINITY = -2
+INFINITY = 2
 
 def check_end_game(board):
     transposed = list(zip(*board))
@@ -49,8 +50,7 @@ def get_possible_boards(board, player):
                 boards.append(new_board)
     return boards
 
-
-def minimax(board, player, ai_player, other_player):
+def alpha_beta(board, player, ai_player, other_player, alpha, beta):
     end_game = check_end_game(board)
     if end_game is not None:
         if end_game == ai_player:
@@ -60,31 +60,36 @@ def minimax(board, player, ai_player, other_player):
         else:
             return DRAW
 
-    values = set()
-
     if player == ai_player:
         next_player = other_player
     else:
         next_player = ai_player
 
-    for new_board in get_possible_boards(board, player):
-        evaluation = minimax(new_board, next_player, ai_player, other_player)
-        values.add(evaluation)
-        if player == ai_player and evaluation == WIN:
-            return WIN
-        elif player == other_player and evaluation == LOSE:
-            return LOSE
-
     if player == ai_player:
-        return max(values)
+        v = MINUS_INFINITY
+        for new_board in get_possible_boards(board, player):
+            v = max(v, alpha_beta(new_board, next_player, ai_player, other_player, alpha, beta))
+            alpha = max(alpha, v)
+            if v == WIN:
+                break
+            if beta <= alpha:
+                break
+        return v
     else:
-        return min(values)
-
+        v = INFINITY
+        for new_board in get_possible_boards(board, player):
+            v = min(v, alpha_beta(new_board, next_player, ai_player, other_player, alpha, beta))
+            beta = min(beta, v)
+            if v == LOSE:
+                break
+            if beta <= alpha:
+                break
+        return v
 
 def make_decision(board, ai_player, other_player):
     boards_evaluation = []
     for new_board in get_possible_boards(board, ai_player):
-        boards_evaluation.append((new_board, minimax(new_board, other_player, ai_player, other_player)))
+        boards_evaluation.append((new_board, alpha_beta(new_board, other_player, ai_player, other_player, MINUS_INFINITY, INFINITY)))
     m = max(boards_evaluation, key=lambda cost: cost[1])
     # choose at random one of the best moves so as to not play the same way every time
     return random.choice([x for x in boards_evaluation if x[1] == m[1]])
@@ -105,6 +110,7 @@ def print_board(board):
 
 def play():
     board = [["_"] * 3 for _ in range(3)]
+    #pick at random who will play first
     start = random.randint(0, 1)
     if start == 1:
         ai_player = "X"
@@ -144,4 +150,3 @@ def play():
             break
 
 play()
-
