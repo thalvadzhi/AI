@@ -10,8 +10,9 @@ with open(file_name, "r") as file:
         congressmen.append(congressman)
         total_number_of_congressmen += 1
 
-test_population_size = 40
-number_of_runs = 20
+test_population_size = int(0.1 * total_number_of_congressmen)
+total_number_of_congressmen -= test_population_size
+number_of_runs = 10
 accuracy_mean = 0
 
 for run in range(number_of_runs):
@@ -23,7 +24,6 @@ for run in range(number_of_runs):
         test.append(congressmen_copy.pop(0))
 
     study = congressmen_copy
-
     votes_for_question_democrat = {"y": [0] * 16, "n": [0] * 16, "?": [0] * 16}
     votes_for_question_republican = {"y": [0] * 16, "n": [0] * 16, "?": [0] * 16}
     number_of_democrats = 0
@@ -37,32 +37,38 @@ for run in range(number_of_runs):
         else:
             number_of_republicans += 1
             current = votes_for_question_republican
-        for i in range(1, len(congressman) - 1):
-            current[congressman[i]][i] += 1
+        for i in range(1, len(congressman)):
+            current[congressman[i]][i-1] += 1
 
     #classify
 
     classification = []
     for congressman in test:
         probability_democrat = 1
-        for i in range(1, len(congressman) - 1):
-            probability_democrat *= votes_for_question_democrat[congressman[i]][i] / number_of_democrats
+        for i in range(1, len(congressman)):
+            probability_democrat *= votes_for_question_democrat[congressman[i]][i-1] / number_of_democrats
         probability_democrat *= number_of_democrats / total_number_of_congressmen
 
         probability_republican = 1
-        for i in range(1, len(congressman) - 1):
-            probability_republican *= votes_for_question_republican[congressman[i]][i] / number_of_republicans
+        for i in range(1, len(congressman)):
+            probability_republican *= votes_for_question_republican[congressman[i]][i-1] / number_of_republicans
         probability_republican *= number_of_republicans / total_number_of_congressmen
-
-        category = max(("democrat", probability_democrat), ("republican", probability_republican), key=lambda prob: prob[1])
+        # print(probability_democrat, probability_republican)
+        category = ""
+        if probability_democrat == probability_republican:
+            category = (random.choice(["democrat", "republican"]),"g")
+        else:
+            category = max(("democrat", probability_democrat), ("republican", probability_republican), key=lambda prob: prob[1])
 
         classification.append((congressman, category))
 
     accuracy = 0
     for classifee in classification:
+        # print(classifee[1][0])
         if classifee[0][0] == classifee[1][0]:
             accuracy += 1
     accuracy /= test_population_size
+	
     accuracy_mean += accuracy
     print("Accuracy for run number {0} is {1}%".format(run, accuracy * 100))
 accuracy_mean /= number_of_runs
