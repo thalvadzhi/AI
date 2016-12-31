@@ -6,4 +6,5 @@
 * hw4 - knapsack problem (genetic algorithm)
 * hw5 - tic-tac-toe AI (minimax, alfa-beta pruning)
 * hw6 - IRIS classification of plants (k-nearest neighbours)
-* hw7 - naive bayes classifier 
+* hw7 - naive bayes classifier
+* hw8 - ID3
