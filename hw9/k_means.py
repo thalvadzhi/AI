@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 
-file_name = "/home/thalvadzhiev/Workspace/AI/hw9/datasets/unbalance/unbalance.txt"
-
+file_name = input("Enter absolute file name: ")
 k = int(input("Enter value for k: "))
 f = open(file_name, "r")
 dataset = []
