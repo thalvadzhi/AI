@@ -8,3 +8,4 @@
 * hw6 - IRIS classification of plants (k-nearest neighbours)
 * hw7 - naive bayes classifier
 * hw8 - ID3
+* hw9 - k means clustering
